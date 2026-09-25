@@ -1,30 +1,33 @@
 import 'dart:async';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../domain/reading_entry.dart';
 import '../domain/reading_repository.dart';
 
-final readingRepositoryProvider = Provider<ReadingRepository>(
-  (ref) => throw UnimplementedError('Override readingRepository in the app composition root.'),
+part 'reading_providers.g.dart';
+
+@Riverpod(keepAlive: true)
+ReadingRepository readingRepository(Ref ref) => throw UnimplementedError(
+  'Override readingRepository in the app composition root.',
 );
 
-final readingEntriesProvider = FutureProvider<List<ReadingEntry>>(
-  (ref) => ref.watch(readingRepositoryProvider).list(),
-);
+@riverpod
+Future<List<ReadingEntry>> readingEntries(Ref ref) =>
+    ref.watch(readingRepositoryProvider).list();
 
-final readingEntryProvider = FutureProvider.family<ReadingEntry?, String>(
-  (ref, bookId) => ref.watch(readingRepositoryProvider).getForBook(bookId),
-);
+@riverpod
+Future<ReadingEntry?> readingEntry(Ref ref, String bookId) =>
+    ref.watch(readingRepositoryProvider).getForBook(bookId);
 
-final readingEntryActionsProvider = AsyncNotifierProvider<ReadingEntryActions, void>(
-  ReadingEntryActions.new,
-);
+@riverpod
+class ReadingEntryActions extends _$ReadingEntryActions {
+  late String _bookId;
 
-class ReadingEntryActions extends AsyncNotifier<void> {
   @override
-  FutureOr<void> build() {}
+  FutureOr<void> build(String bookId) {
+    _bookId = bookId;
+  }
 
   Future<bool> save(ReadingEntry entry) async {
     if (state.isLoading) return false;
@@ -33,7 +36,7 @@ class ReadingEntryActions extends AsyncNotifier<void> {
       await ref.read(readingRepositoryProvider).save(entry);
       state = const AsyncData<void>(null);
       ref.invalidate(readingEntriesProvider);
-      ref.invalidate(readingEntryProvider(entry.bookId));
+      ref.invalidate(readingEntryProvider(_bookId));
       return true;
     } catch (error, stackTrace) {
       state = AsyncError<void>(error, stackTrace);
@@ -41,14 +44,14 @@ class ReadingEntryActions extends AsyncNotifier<void> {
     }
   }
 
-  Future<bool> delete(String bookId) async {
+  Future<bool> delete() async {
     if (state.isLoading) return false;
     state = const AsyncLoading<void>();
     try {
-      await ref.read(readingRepositoryProvider).delete(bookId);
+      await ref.read(readingRepositoryProvider).delete(_bookId);
       state = const AsyncData<void>(null);
       ref.invalidate(readingEntriesProvider);
-      ref.invalidate(readingEntryProvider(bookId));
+      ref.invalidate(readingEntryProvider(_bookId));
       return true;
     } catch (error, stackTrace) {
       state = AsyncError<void>(error, stackTrace);

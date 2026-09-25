@@ -1,19 +1,19 @@
 import 'dart:async';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../domain/app_settings.dart';
 import '../domain/settings_repository.dart';
 
-final settingsRepositoryProvider = Provider<SettingsRepository>(
-  (ref) => throw UnimplementedError('Override settingsRepository in the app composition root.'),
+part 'settings_providers.g.dart';
+
+@Riverpod(keepAlive: true)
+SettingsRepository settingsRepository(Ref ref) => throw UnimplementedError(
+  'Override settingsRepository in the app composition root.',
 );
 
-final appSettingsControllerProvider = AsyncNotifierProvider<AppSettingsController, AppSettings>(
-  AppSettingsController.new,
-);
-
-class AppSettingsController extends AsyncNotifier<AppSettings> {
+@riverpod
+class AppSettingsController extends _$AppSettingsController {
   Future<void> _pendingWrites = Future<void>.value();
 
   @override

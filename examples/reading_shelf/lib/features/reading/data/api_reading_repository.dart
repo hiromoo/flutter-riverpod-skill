@@ -14,7 +14,11 @@ class ApiReadingRepository implements ReadingRepository {
   Future<List<domain.ReadingEntry>> list() async {
     try {
       final response = await _api.listReadingEntries();
-      return response.data?.map(_mapEntry).toList(growable: false) ?? const [];
+      final entries = response.data;
+      if (entries == null) {
+        throw const AppFailureException(AppFailure(kind: AppFailureKind.invalidData));
+      }
+      return entries.map(_mapEntry).toList(growable: false);
     } on DioException catch (error) {
       throw _mapDioFailure(error);
     }

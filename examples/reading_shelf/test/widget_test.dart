@@ -37,6 +37,16 @@ void main() {
     expect(find.text('The Quiet Atlas'), findsWidgets);
     expect(find.text('by Mina Sato'), findsOneWidget);
 
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(ReadingShelfApp)),
+      listen: false,
+    );
+    await container.read(appSettingsControllerProvider.notifier).saveSettings(
+          const AppSettings(locale: LocalePreference.japanese),
+        );
+    await tester.pumpAndSettle();
+    expect(find.text('本を探す'), findsWidgets);
+
     tester.view.resetPhysicalSize();
     tester.view.resetDevicePixelRatio();
   });

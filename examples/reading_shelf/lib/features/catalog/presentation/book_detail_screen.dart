@@ -28,7 +28,7 @@ class BookDetailScreen extends ConsumerWidget {
         data: (value) {
           if (value == null) return Center(child: Text(context.l.bookNotFound));
           final entry = ref.watch(readingEntryProvider(bookId));
-          final action = ref.watch(readingEntryActionsProvider);
+          final action = ref.watch(readingEntryActionsProvider(bookId));
           return Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 900),
@@ -87,7 +87,7 @@ class BookDetailScreen extends ConsumerWidget {
                             onPressed: action.isLoading
                                 ? null
                                 : () async {
-                                    final saved = await ref.read(readingEntryActionsProvider.notifier).save(
+                                    final saved = await ref.read(readingEntryActionsProvider(bookId).notifier).save(
                                           ReadingEntry(
                                             bookId: bookId,
                                             status: ReadingStatus.wantToRead,

@@ -60,7 +60,7 @@ class _EditorForm extends HookConsumerWidget {
     final status = useState(ReadingStatus.wantToRead);
     final rating = useState<int?>(null);
     final dirty = useState(false);
-    final action = ref.watch(readingEntryActionsProvider);
+    final action = ref.watch(readingEntryActionsProvider(bookId));
     final saving = action.isLoading;
 
     useEffect(() {
@@ -206,7 +206,7 @@ class _EditorForm extends HookConsumerWidget {
     ValueNotifier<bool> dirty,
   ) async {
     if (!formKey.currentState!.validate()) return;
-    final saved = await ref.read(readingEntryActionsProvider.notifier).save(ReadingEntry(
+    final saved = await ref.read(readingEntryActionsProvider(bookId).notifier).save(ReadingEntry(
           bookId: bookId,
           status: status,
           pagesRead: int.parse(pagesController.text),
@@ -235,7 +235,7 @@ class _EditorForm extends HookConsumerWidget {
         ) ??
         false;
     if (!confirmed || !context.mounted) return;
-    final deleted = await ref.read(readingEntryActionsProvider.notifier).delete(bookId);
+    final deleted = await ref.read(readingEntryActionsProvider(bookId).notifier).delete();
     if (deleted && context.mounted) {
       dirty.value = false;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.l.entryDeleted)));
