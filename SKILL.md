@@ -1,5 +1,5 @@
 ---
-name: riverpod-flutter-architecture
+name: flutter-riverpod-skill
 description: Build and evolve Flutter applications with Riverpod, Freezed, Dio clients generated from OpenAPI, Flutter localization, consistent Material theming, and type-safe go_router navigation. Use for new apps, feature work, and incremental architecture refactors.
 ---
 
