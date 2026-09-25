@@ -1,6 +1,6 @@
 # Reading Shelf
 
-このサンプルは、リポジトリの Riverpod Flutter Architecture Skill を使った Flutter Web の読書記録アプリです。架空の書籍カタログを検索し、本棚への登録、読書記録の編集、言語・テーマ切替を試せます。認証や外部 API キーは不要です。
+このサンプルは、リポジトリの Flutter Riverpod Skill を使った Flutter Web の読書記録アプリです。架空の書籍カタログを検索し、本棚への登録、読書記録の編集、言語・テーマ切替を試せます。認証や外部 API キーは不要です。
 
 ## 必要なもの
 

@@ -1,4 +1,4 @@
-# Riverpod Flutter Architecture Skill
+# Flutter Riverpod Skill
 
 Riverpod を使う Flutter アプリの設計・実装を支援する Codex Skill です。新規アプリ、既存機能の追加、段階的なリファクタリングで利用できます。
 
@@ -13,7 +13,7 @@ Riverpod を使う Flutter アプリの設計・実装を支援する Codex Skil
 
 ## 利用方法
 
-このリポジトリを Codex Skill として利用可能な場所に配置し、`riverpod-flutter-architecture` Skill をアプリ開発タスクで呼び出してください。Skill 本文は [SKILL.md](SKILL.md)、必要に応じて参照する詳細ガイドは [`references/`](references/) にあります。
+このリポジトリを Codex Skill として利用可能な場所に配置し、`flutter-riverpod-skill` Skill をアプリ開発タスクで呼び出してください。Skill 本文は [SKILL.md](SKILL.md)、必要に応じて参照する詳細ガイドは [`references/`](references/) にあります。
 
 ## サンプルアプリ
 
