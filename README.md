@@ -1,32 +1,32 @@
 # Flutter Riverpod Skill
 
-Riverpod を使う Flutter アプリの設計・実装を支援する Codex Skill です。新規アプリ、既存機能の追加、段階的なリファクタリングで利用できます。
+A Codex skill for designing and building Flutter applications with Riverpod. Use it when starting a new app, adding features, or incrementally refactoring an existing application.
 
-## 方針
+## Principles
 
-- Flutter 公式の [Architecture Best Practices Skill](https://github.com/flutter/agent-plugins/blob/main/skills/flutter-apply-architecture-best-practices/SKILL.md) をアーキテクチャの基準として参照し、Riverpod 向けのルールを追加します。
-- 機能単位の構成、Riverpod の `Notifier` / `AsyncNotifier`、Freezed、`flutter_hooks` を使います。
-- 新規 Flutter プロジェクトでは FVM と `.fvmrc` で検証済み SDK を固定します。
-- API クライアントは OpenAPI Generator の `dart-dio` で生成します。
-- UI テーマ、多言語対応 (Flutter `gen_l10n`) と型安全な `go_router` を標準にします。
-- Flutter 公式 agent-plugins の追加 Skill は、作業に合う場合だけ参照します。内容は複製しません。
+- Use Flutter's official [Architecture Best Practices skill](https://github.com/flutter/agent-plugins/blob/main/skills/flutter-apply-architecture-best-practices/SKILL.md) as the architectural baseline, with additional guidance for Riverpod.
+- Organize code by feature and use Riverpod `Notifier` / `AsyncNotifier`, Freezed, and `flutter_hooks`.
+- Pin the verified Flutter SDK with FVM and `.fvmrc` for new Flutter projects.
+- Generate API clients from OpenAPI specifications with OpenAPI Generator's `dart-dio` generator.
+- Use a centralized UI theme, Flutter `gen_l10n` for localization, and type-safe `go_router` routes.
+- Consult additional Flutter agent skills when they fit the task; do not duplicate their contents here.
 
-## 利用方法
+## Usage
 
-このリポジトリを Codex Skill として利用可能な場所に配置し、`flutter-riverpod-skill` Skill をアプリ開発タスクで呼び出してください。Skill 本文は [SKILL.md](SKILL.md)、必要に応じて参照する詳細ガイドは [`references/`](references/) にあります。
+Place this repository where Codex can use it as a skill, then invoke the `flutter-riverpod-skill` skill for Flutter development tasks. The skill instructions are in [SKILL.md](SKILL.md); focused guidance is available in [`references/`](references/).
 
-## サンプルアプリ
+## Sample app
 
-[Reading Shelf](examples/reading_shelf/README.md) は、この Skill の構成・コード生成・テスト方針を試せる Flutter Web アプリと Shelf API です。外部 API キーなしで起動できます。
+[Reading Shelf](examples/reading_shelf/README.md) is a Flutter web app with a Shelf API. Use it to explore the recommended structure, code generation, and testing approach. It runs without an external API key.
 
-## 参照元
+## References
 
-- [Flutter agent-plugins Skills](https://github.com/flutter/agent-plugins/tree/main/skills)
-- [Flutter アプリのアーキテクチャ Skill](https://github.com/flutter/agent-plugins/blob/main/skills/flutter-apply-architecture-best-practices/SKILL.md)
-- [Flutter の国際化ガイド](https://docs.flutter.dev/ui/internationalization)
-- [OpenAPI Generator dart-dio](https://openapi-generator.tech/docs/generators/dart-dio/)
+- [Flutter agent-plugins skills](https://github.com/flutter/agent-plugins/tree/main/skills)
+- [Flutter architecture skill](https://github.com/flutter/agent-plugins/blob/main/skills/flutter-apply-architecture-best-practices/SKILL.md)
+- [Flutter internationalization guide](https://docs.flutter.dev/ui/internationalization)
+- [OpenAPI Generator `dart-dio`](https://openapi-generator.tech/docs/generators/dart-dio/)
 
-## 構成
+## Repository structure
 
 ```text
 SKILL.md
@@ -39,6 +39,6 @@ references/
   testing-and-generation.md
 ```
 
-## ライセンス
+## License
 
-このリポジトリは [MIT License](LICENSE) のもとで公開しています。
+This repository is released under the [MIT License](LICENSE).
