@@ -1,0 +1,43 @@
+name: Reading Shelf
+
+on:
+  pull_request:
+    paths:
+      - 'examples/reading_shelf/**'
+      - '.github/workflows/reading-shelf.yml'
+      - 'SKILL.md'
+      - 'references/**'
+  push:
+    paths:
+      - 'examples/reading_shelf/**'
+      - '.github/workflows/reading-shelf.yml'
+      - 'SKILL.md'
+      - 'references/**'
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Validate and regenerate API client
+        working-directory: examples/reading_shelf
+        run: bash scripts/validate_generated.sh
+      - name: Verify API client is committed
+        run: git diff --exit-code -- examples/reading_shelf/api/openapi.yaml examples/reading_shelf/packages/api_client
+      - name: Test API server
+        working-directory: examples/reading_shelf/server
+        run: dart test && dart analyze
+      - name: Test and build Flutter Web
+        working-directory: examples/reading_shelf
+        run: flutter test && flutter build web --dart-define=API_BASE_URL=http://localhost:8080

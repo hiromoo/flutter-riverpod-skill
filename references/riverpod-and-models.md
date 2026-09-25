@@ -7,6 +7,7 @@ Use Riverpod for state shared across widgets, business/application state, asynch
 - Prefer `Notifier` for synchronous state with user-driven mutations and `AsyncNotifier` for state whose initial value or refresh is asynchronous.
 - Use `Provider`, `FutureProvider`, or `StreamProvider` for derived, read-only, or naturally asynchronous values that do not need command methods.
 - Use `riverpod_annotation` and `riverpod_generator` for provider declarations in new code. Follow the project's pinned Riverpod API version and generated part-file conventions.
+- Keep the Riverpod runtime and generator on compatible releases. After selecting versions, resolve dependencies and generate a minimal `@riverpod` provider before writing feature providers; compile the result against the resolved runtime. If generated APIs are incompatible or a known generator issue blocks a provider kind, prefer a normal supported provider declaration over hand-fixing `.g.dart` output, and leave a concise issue/upgrade note.
 - Treat `StateNotifier` and `ChangeNotifier` as compatibility choices for existing integrations, not defaults for new feature state.
 - A separate ViewModel is not required. Introduce a distinct coordinator only when it improves reuse, testability, or separation of responsibilities beyond the notifier.
 

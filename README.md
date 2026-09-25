@@ -14,6 +14,10 @@ Riverpod を使う Flutter アプリの設計・実装を支援する Codex Skil
 
 このリポジトリを Codex Skill として利用可能な場所に配置し、`riverpod-flutter-architecture` Skill をアプリ開発タスクで呼び出してください。Skill 本文は [SKILL.md](SKILL.md)、必要に応じて参照する詳細ガイドは [`references/`](references/) にあります。
 
+## サンプルアプリ
+
+[Reading Shelf](examples/reading_shelf/README.md) は、この Skill の構成・コード生成・テスト方針を試せる Flutter Web アプリと Shelf API です。外部 API キーなしで起動できます。
+
 ## 参照元
 
 - [Flutter agent-plugins Skills](https://github.com/flutter/agent-plugins/tree/main/skills)

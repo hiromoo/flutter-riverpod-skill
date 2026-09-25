@@ -1,0 +1,27 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Reading Shelf (Web)",
+      "request": "launch",
+      "type": "dart",
+      "cwd": "${workspaceFolder}/examples/reading_shelf",
+      "program": "${workspaceFolder}/examples/reading_shelf/lib/main.dart",
+      "deviceId": "chrome",
+      "toolArgs": [
+        "--web-port",
+        "3000",
+        "--dart-define=API_BASE_URL=http://localhost:8080"
+      ],
+      "preLaunchTask": "Reading Shelf: Start API"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Reading Shelf (Web + API)",
+      "configurations": [
+        "Reading Shelf (Web)"
+      ]
+    }
+  ]
+}

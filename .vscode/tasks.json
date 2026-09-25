@@ -1,0 +1,31 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Reading Shelf: Start API",
+      "type": "shell",
+      "command": "if curl --silent --fail 'http://localhost:8080/books?page=1&pageSize=1' >/dev/null; then echo 'Reading Shelf API is already available at http://localhost:8080'; else dart run bin/server.dart; fi",
+      "options": {
+        "cwd": "${workspaceFolder}/examples/reading_shelf/server"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "reading-shelf-api",
+        "pattern": {
+          "regexp": "^(.*)$",
+          "message": 1
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Reading Shelf API (listening at|is already available at)",
+          "endsPattern": "Reading Shelf API (listening at|is already available at)"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": false
+      }
+    }
+  ]
+}

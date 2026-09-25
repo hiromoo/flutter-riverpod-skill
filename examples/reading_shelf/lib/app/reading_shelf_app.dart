@@ -1,0 +1,41 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../features/settings/application/settings_providers.dart';
+import '../features/settings/domain/app_settings.dart';
+import '../l10n/generated/app_localizations.dart';
+import 'app_theme.dart';
+import 'router.dart';
+
+class ReadingShelfApp extends ConsumerWidget {
+  const ReadingShelfApp({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(appSettingsControllerProvider).asData?.value ?? const AppSettings();
+    return MaterialApp.router(
+      onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: switch (settings.theme) {
+        ThemePreference.system => ThemeMode.system,
+        ThemePreference.light => ThemeMode.light,
+        ThemePreference.dark => ThemeMode.dark,
+      },
+      locale: switch (settings.locale) {
+        LocalePreference.system => null,
+        LocalePreference.english => const Locale('en'),
+        LocalePreference.japanese => const Locale('ja'),
+      },
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
+      routerConfig: appRouter,
+    );
+  }
+}

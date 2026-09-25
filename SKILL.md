@@ -25,6 +25,8 @@ Apply this skill when creating a Flutter application, adding a feature, or incre
 3. Implement or adapt domain models, repositories, API adapters, providers/notifiers, typed routes, localization resources, and UI with the boundaries above.
 4. Run the applicable generation, analysis, and tests. Summarize generated artifacts and validation results.
 
+Before introducing or upgrading generators, verify that the pinned SDK, runtime packages, and generator packages are mutually compatible. Resolve dependencies and run a minimal clean code-generation build before implementing multiple features; do not assume a generated provider API from examples for another Riverpod major version. If the compatible generator has a defect or migration gap, keep affected providers hand-written with the project's supported `Provider`/`NotifierProvider` APIs rather than committing broken output, and record the exception and upgrade path.
+
 ## Read focused guidance
 
 - For architecture or project structure decisions, read [references/architecture.md](references/architecture.md).
@@ -32,6 +34,7 @@ Apply this skill when creating a Flutter application, adding a feature, or incre
 - When integrating an HTTP API, read [references/api-client.md](references/api-client.md).
 - For themes, localization, accessibility, responsive UI, or navigation, read [references/ui-localization-and-navigation.md](references/ui-localization-and-navigation.md).
 - For code generation, CI checks, or tests, read [references/testing-and-generation.md](references/testing-and-generation.md).
+- Use [examples/reading_shelf/README.md](examples/reading_shelf/README.md) as a runnable reference when useful; it demonstrates the conventions without replacing project-specific requirements.
 
 ## Use Flutter's other agent skills when relevant
 
