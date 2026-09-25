@@ -2,6 +2,8 @@
 
 A Codex skill for designing and building Flutter applications with Riverpod. Use it when starting a new app, adding features, or incrementally refactoring an existing application.
 
+[English](README.md) | [日本語](README.ja.md)
+
 ## Principles
 
 - Use Flutter's official [Architecture Best Practices skill](https://github.com/flutter/agent-plugins/blob/main/skills/flutter-apply-architecture-best-practices/SKILL.md) as the architectural baseline, with additional guidance for Riverpod.
