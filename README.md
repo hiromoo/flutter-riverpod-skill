@@ -6,6 +6,7 @@ Riverpod を使う Flutter アプリの設計・実装を支援する Codex Skil
 
 - Flutter 公式の [Architecture Best Practices Skill](https://github.com/flutter/agent-plugins/blob/main/skills/flutter-apply-architecture-best-practices/SKILL.md) をアーキテクチャの基準として参照し、Riverpod 向けのルールを追加します。
 - 機能単位の構成、Riverpod の `Notifier` / `AsyncNotifier`、Freezed、`flutter_hooks` を使います。
+- 新規 Flutter プロジェクトでは FVM と `.fvmrc` で検証済み SDK を固定します。
 - API クライアントは OpenAPI Generator の `dart-dio` で生成します。
 - UI テーマ、多言語対応 (Flutter `gen_l10n`) と型安全な `go_router` を標準にします。
 - Flutter 公式 agent-plugins の追加 Skill は、作業に合う場合だけ参照します。内容は複製しません。

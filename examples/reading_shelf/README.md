@@ -4,8 +4,10 @@
 
 ## 必要なもの
 
-- Flutter stable / Dart 3.12 以降
+- FVM と Flutter 3.47.5（Dart 3.13.4 は同梱）
 - Java 17 以降と Node.js/npm（OpenAPI クライアントを再生成する場合）
+
+FVM が未導入の場合は、[公式手順](https://fvm.app/documentation/getting-started/installation)に従ってインストールします。SDK の固定値は `.fvmrc` にあります。初回はアプリのディレクトリで `fvm use 3.47.5` を実行すると、Flutter SDK と VS Code 用 SDK link を準備できます。
 
 ## 起動
 
@@ -13,18 +15,18 @@
 
 ```sh
 cd examples/reading_shelf/server
-dart pub get
-dart run bin/server.dart
+fvm dart pub get
+fvm dart run bin/server.dart
 ```
 
 ターミナル 2:
 
 ```sh
 cd examples/reading_shelf
-flutter pub get
-dart run build_runner build
-flutter gen-l10n
-flutter run -d chrome --web-port 3000 --dart-define=API_BASE_URL=http://localhost:8080
+fvm flutter pub get
+fvm dart run build_runner build
+fvm flutter gen-l10n
+fvm flutter run -d chrome --web-port 3000 --dart-define=API_BASE_URL=http://localhost:8080
 ```
 
 ブラウザーで `http://localhost:3000` を開きます。URL は hash routing を使うため、詳細画面などへの直接アクセスと再読み込みができます。サーバーの読書記録は `server/data/reading_entries.json` に保存されます。
@@ -40,9 +42,9 @@ OpenAPI 仕様は `api/openapi.yaml`、generator CLI wrapper は `openapitools.j
 ```sh
 ./scripts/generate_api.sh
 cd packages/api_client
-dart pub get
-dart run build_runner build
-dart test
+fvm dart pub get
+fvm dart run build_runner build
+fvm dart test
 ```
 
 OpenAPI Generator が出力したコードは手編集せず、生成 serializer もコミットします。`scripts/validate_generated.sh` は再生成差分と package の解析を検証します。
@@ -52,13 +54,15 @@ OpenAPI Generator が出力したコードは手編集せず、生成 serializer
 ## 検証
 
 ```sh
-cd server && dart test && dart analyze
-cd ..
-flutter gen-l10n
-dart run build_runner build
-flutter analyze
-flutter test
-flutter build web --dart-define=API_BASE_URL=http://localhost:8080
+cd examples/reading_shelf/server
+fvm dart test
+fvm dart analyze
+cd ../..
+fvm flutter gen-l10n
+fvm dart run build_runner build
+fvm flutter analyze lib test
+fvm flutter test
+fvm flutter build web --dart-define=API_BASE_URL=http://localhost:8080
 ```
 
 サーバーテストは検索・ページ送り、入力検証、保存後の再起動復元、削除、CORS preflight を確認します。API package test は null 許容記録の built_value serializer を、Widget test は repository override でローカライズされた検索結果を確認します。

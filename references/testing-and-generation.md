@@ -4,6 +4,9 @@ Use relevant Flutter agent skills when available: `dart-run-static-analysis`, `d
 
 ## Generated code
 
+- For new Flutter apps, pin an exact, verified Flutter release in `.fvmrc`; use FVM's Flutter and Dart proxy commands locally and configure CI to read that same file. Keep `.fvm/` caches and SDK symlinks out of version control. Existing projects may retain another established version manager.
+- When a repository contains multiple Dart/Flutter packages, run each package's analyzer and tests from that package's own context. Scope app analysis to app source and tests (for example `flutter analyze lib test`) so nested server or tooling packages are not analyzed against the app's package configuration.
+
 - Never edit generated files by hand. Edit source annotations, ARB files, OpenAPI documents, or generator configuration, then run the owning generator.
 - Keep generation commands and tool versions reproducible. Avoid unrelated generated diffs; review generated output whenever a schema or route change affects public app behavior.
 - At project setup or after dependency upgrades, first resolve dependencies and run a minimal clean build for every generator (Riverpod/Freezed/router, built_value, and l10n as applicable). Check generated files compile against the resolved runtime packages before scaling out implementation; generator package version, runtime package version, Dart SDK, and analyzer constraints must be compatible. Avoid fixing generator/runtime mismatches by manually editing output. If needed, use supported handwritten provider declarations temporarily and document the reason.

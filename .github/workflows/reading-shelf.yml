@@ -28,7 +28,7 @@ jobs:
           node-version: 22
       - uses: subosito/flutter-action@v2
         with:
-          channel: stable
+          flutter-version-file: examples/reading_shelf/.fvmrc
           cache: true
       - name: Validate and regenerate API client
         working-directory: examples/reading_shelf

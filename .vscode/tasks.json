@@ -4,7 +4,7 @@
     {
       "label": "Reading Shelf: Start API",
       "type": "shell",
-      "command": "if curl --silent --fail 'http://localhost:8080/books?page=1&pageSize=1' >/dev/null; then echo 'Reading Shelf API is already available at http://localhost:8080'; else dart run bin/server.dart; fi",
+      "command": "if curl --silent --fail 'http://localhost:8080/books?page=1&pageSize=1' >/dev/null; then echo 'Reading Shelf API is already available at http://localhost:8080'; else fvm dart run bin/server.dart; fi",
       "options": {
         "cwd": "${workspaceFolder}/examples/reading_shelf/server"
       },

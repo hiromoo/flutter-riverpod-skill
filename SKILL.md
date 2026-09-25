@@ -16,6 +16,7 @@ Apply this skill when creating a Flutter application, adding a feature, or incre
 - For APIs described by OpenAPI, generate the client with OpenAPI Generator's stable `dart-dio` generator. Keep generated code behind data adapters and repositories.
 - Use Flutter `gen_l10n` with ARB files for all user-facing text. The app's supported locales start with English and Japanese. Expose generated localizations as `context.l.*` through a `BuildContext` extension.
 - Centralize Material theme configuration in `MaterialApp.router`; use `go_router` and `go_router_builder` typed routes for navigation.
+- For new Flutter projects, pin the verified Flutter SDK with FVM in `.fvmrc` and use that SDK in local commands, IDE settings, and CI. In an existing project, preserve its established SDK manager unless the task includes migrating it.
 - Inspect the target repository before editing. Preserve established conventions where they do not conflict with these requirements, and migrate existing applications incrementally by feature.
 
 ## Workflow

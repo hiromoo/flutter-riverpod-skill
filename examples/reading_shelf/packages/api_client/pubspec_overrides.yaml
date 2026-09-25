@@ -1,0 +1,2 @@
+dependency_overrides:
+  build_runner: 2.15.1
