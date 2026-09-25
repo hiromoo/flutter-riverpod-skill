@@ -38,3 +38,7 @@ references/
   ui-localization-and-navigation.md
   testing-and-generation.md
 ```
+
+## ライセンス
+
+このリポジトリは [MIT License](LICENSE) のもとで公開しています。
