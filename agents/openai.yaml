@@ -1,0 +1,4 @@
+interface:
+  display_name: "Riverpod Flutter Architecture"
+  short_description: "Build Flutter apps with Riverpod and architecture guidance"
+  default_prompt: "Apply the Riverpod Flutter architecture skill to this app task."
