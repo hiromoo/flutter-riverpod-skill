@@ -1,6 +1,6 @@
 # Flutter Riverpod Skill
 
-Riverpod を使った Flutter アプリの設計・開発を支援する Codex Skill です。新規アプリの作成、機能追加、既存アプリの段階的なリファクタリングに利用できます。
+Riverpod を使った Flutter アプリの設計・開発を支援する、Codex と Claude Code 向けの Agent Skill です。新規アプリの作成、機能追加、既存アプリの段階的なリファクタリングに利用できます。
 
 [English](README.md) | 日本語
 
@@ -15,7 +15,25 @@ Riverpod を使った Flutter アプリの設計・開発を支援する Codex S
 
 ## 利用方法
 
-このリポジトリを Codex が Skill として利用できる場所に配置し、Flutter 開発タスクで `flutter-riverpod-skill` を呼び出してください。Skill の説明は [SKILL.md](SKILL.md)、目的別の詳しいガイドは [`references/`](references/) にあります。
+Skill の説明は [SKILL.md](SKILL.md)、目的別の詳しいガイドは [`references/`](references/) にあります。同じファイルを Codex と Claude Code の両方で利用できます。
+
+### Codex
+
+このリポジトリを Codex が Skill として利用できる場所に配置し、Flutter 開発タスクで `flutter-riverpod-skill` を呼び出してください。
+
+### Claude Code
+
+ディレクトリ名を `flutter-riverpod-skill` のまま、Claude Code の skills ディレクトリにクローンしてください。
+
+```sh
+# すべてのプロジェクトで利用する場合
+git clone https://github.com/hiromoo/riverpod_ai_docs.git ~/.claude/skills/flutter-riverpod-skill
+
+# 特定のプロジェクトだけで利用する場合（プロジェクトのルートで実行）
+git clone https://github.com/hiromoo/riverpod_ai_docs.git .claude/skills/flutter-riverpod-skill
+```
+
+既存のクローンがある場合は、`ln -s "$PWD" ~/.claude/skills/flutter-riverpod-skill` のようにシンボリックリンクを作成しても構いません。該当する Flutter タスクでは Claude Code が自動的に Skill を読み込みます。`/flutter-riverpod-skill` で明示的に呼び出すこともできます。
 
 ## サンプルアプリ
 
@@ -32,7 +50,7 @@ Riverpod を使った Flutter アプリの設計・開発を支援する Codex S
 
 ```text
 SKILL.md
-agents/openai.yaml
+agents/openai.yaml   # Codex の UI 用メタデータ（Claude Code では使用しません）
 references/
   architecture.md
   riverpod-and-models.md
@@ -44,3 +62,9 @@ references/
 ## ライセンス
 
 このリポジトリは [MIT License](LICENSE) のもとで公開しています。
+
+## スキルの評価
+
+GPT-6 Lunaによるスキルあり／なしの実装を、GPT-6 Astraの採点と独立したFlutter/Dartの解析・テストで比較します。評価ケース、実行方法、結果の読み方は[評価ガイド](EVALUATION.md)を参照してください。
+
+[初回の評価結果](benchmarks/iteration-1.md)では、スキルありで機能・規約の合格率が向上しました。一方で、実行時間とトークン使用量の増加や、Lunaが一貫して適用できなかった規約も確認されています。

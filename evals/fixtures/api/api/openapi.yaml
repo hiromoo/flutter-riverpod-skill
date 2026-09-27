@@ -1,0 +1,47 @@
+openapi: 3.0.3
+info:
+  title: Reading API
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+paths:
+  /entries/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: {type: string}
+    get:
+      operationId: getEntry
+      responses:
+        '200':
+          description: Entry
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ReadingRecord'}
+    put:
+      operationId: saveEntry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SaveEntry'}
+      responses:
+        '200':
+          description: Saved
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ReadingRecord'}
+components:
+  schemas:
+    ReadingRecord:
+      type: object
+      required: [id]
+      properties:
+        id: {type: string}
+        note: {type: string, nullable: true}
+    SaveEntry:
+      type: object
+      required: [note]
+      properties:
+        note: {type: string, nullable: true}

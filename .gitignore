@@ -1,0 +1,4 @@
+# Evaluation scratch projects, SDK caches and raw model artifacts remain local.
+/eval-results/
+__pycache__/
+*.pyc

@@ -1,6 +1,6 @@
 # Flutter Riverpod Skill
 
-A Codex skill for designing and building Flutter applications with Riverpod. Use it when starting a new app, adding features, or incrementally refactoring an existing application.
+An agent skill for Codex and Claude Code for designing and building Flutter applications with Riverpod. Use it when starting a new app, adding features, or incrementally refactoring an existing application.
 
 [English](README.md) | [日本語](README.ja.md)
 
@@ -15,7 +15,25 @@ A Codex skill for designing and building Flutter applications with Riverpod. Use
 
 ## Usage
 
-Place this repository where Codex can use it as a skill, then invoke the `flutter-riverpod-skill` skill for Flutter development tasks. The skill instructions are in [SKILL.md](SKILL.md); focused guidance is available in [`references/`](references/).
+The skill instructions are in [SKILL.md](SKILL.md); focused guidance is available in [`references/`](references/). The same files work with both Codex and Claude Code.
+
+### Codex
+
+Place this repository where Codex can use it as a skill, then invoke the `flutter-riverpod-skill` skill for Flutter development tasks.
+
+### Claude Code
+
+Clone this repository into a Claude Code skills directory, keeping `flutter-riverpod-skill` as the directory name:
+
+```sh
+# Available in all projects
+git clone https://github.com/hiromoo/riverpod_ai_docs.git ~/.claude/skills/flutter-riverpod-skill
+
+# Or only in one project (run from the project root)
+git clone https://github.com/hiromoo/riverpod_ai_docs.git .claude/skills/flutter-riverpod-skill
+```
+
+If you already have a local clone, symlink it instead, for example `ln -s "$PWD" ~/.claude/skills/flutter-riverpod-skill`. Claude Code loads the skill automatically for matching Flutter tasks; you can also invoke it explicitly with `/flutter-riverpod-skill`.
 
 ## Sample app
 
@@ -32,7 +50,7 @@ Place this repository where Codex can use it as a skill, then invoke the `flutte
 
 ```text
 SKILL.md
-agents/openai.yaml
+agents/openai.yaml   # Codex UI metadata (ignored by Claude Code)
 references/
   architecture.md
   riverpod-and-models.md
@@ -44,3 +62,9 @@ references/
 ## License
 
 This repository is released under the [MIT License](LICENSE).
+
+## Evaluation
+
+Reproducible implementation evaluations compare GPT-6 Luna with and without this skill, with GPT-6 Astra grading and independent Flutter/Dart checks. See [the evaluation guide](EVALUATION.md) for the fixed cases, commands, and limitations.
+
+The [initial measured result](benchmarks/iteration-1.md) found higher functional and convention pass rates with the skill, while also showing substantial time/token overhead and several conventions that Luna still applied inconsistently.

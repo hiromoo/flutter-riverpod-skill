@@ -1,0 +1,138 @@
+{
+  "schema_version": 1,
+  "skill_name": "flutter-riverpod-skill",
+  "solver": {
+    "model": "gpt-6-luna",
+    "reasoning_effort": "medium"
+  },
+  "judge": {
+    "model": "gpt-6-astra",
+    "reasoning_effort": "high"
+  },
+  "timeout_seconds": 1800,
+  "evals": [
+    {
+      "id": "feature",
+      "prompt": "書籍カタログのプレースホルダーを動く画面にしてください。一覧から詳細へ進めて、読み込み・空・失敗・再試行に対応し、英語と日本語で使えるようにしてください。READMEの既存ホストインターフェースと表示要件を守り、必要なテストを追加して検証してください。",
+      "expected_output": "動作する一覧・詳細画面、英日表示、異常系と再試行、検証結果。",
+      "assertions": [
+        {
+          "id": "feature_boundaries",
+          "category": "convention",
+          "text": "UI and domain do not depend on transport JSON; mapping is behind a repository/data adapter."
+        },
+        {
+          "id": "riverpod",
+          "category": "convention",
+          "text": "Application state uses Riverpod Notifier/AsyncNotifier or asynchronous providers with explicit ownership, not widget-managed remote state."
+        },
+        {
+          "id": "freezed",
+          "category": "convention",
+          "text": "Domain/state models use Freezed with compiling generated output."
+        },
+        {
+          "id": "l10n",
+          "category": "convention",
+          "text": "English and Japanese user-facing strings use ARB/gen_l10n and context.l access."
+        },
+        {
+          "id": "typed_routes",
+          "category": "convention",
+          "text": "Navigation uses go_router_builder typed routes and centralized MaterialApp.router theme."
+        },
+        {
+          "id": "behavior",
+          "category": "functional",
+          "text": "List/detail, loading, empty, error and retry work; implementation and tests provide concrete evidence."
+        }
+      ],
+      "files": [
+        "evals/fixtures/common",
+        "evals/fixtures/feature"
+      ]
+    },
+    {
+      "id": "api",
+      "prompt": "api/openapi.yamlの読書記録APIを統合してください。OpenAPI Generatorのdart-dioでpackages/reading_apiにクライアントを生成し、TASK_API.mdとlib/reading_client.dartの既存インターフェースから取得・保存できるようにしてください。メモが省略・null・文字列のレスポンスと、メモをnullで消す更新を扱ってください。必要なテストと再生成手順を追加して検証してください。",
+      "expected_output": "再生成可能なAPIクライアントとドメイン変換、nullable対応、各packageの検証結果。",
+      "assertions": [
+        {
+          "id": "generated",
+          "category": "functional",
+          "text": "Actual dart-dio generated client is used for requests, not an unused generated package alongside hand-written HTTP calls."
+        },
+        {
+          "id": "boundary",
+          "category": "convention",
+          "text": "Public domain records do not expose generated DTOs, built_value Optional or Dio; adapter maps these safely."
+        },
+        {
+          "id": "freezed",
+          "category": "convention",
+          "text": "Hand-authored domain records use Freezed; generated DTOs remain generator owned."
+        },
+        {
+          "id": "regeneration",
+          "category": "functional",
+          "text": "Documented pinned generation commands reproduce client and serializer output without hand editing generated files."
+        },
+        {
+          "id": "package_validation",
+          "category": "functional",
+          "text": "Generated package has its own successful analysis and meaningful serializer/contract tests, not only app-root validation."
+        },
+        {
+          "id": "nullable",
+          "category": "functional",
+          "text": "Omitted/null/string response notes and explicit-null/string update bodies satisfy the API contract."
+        }
+      ],
+      "files": [
+        "evals/fixtures/common",
+        "evals/fixtures/api"
+      ]
+    },
+    {
+      "id": "refactor",
+      "prompt": "検索画面の通信と状態管理がWidgetに集中しているので、今後機能追加しやすい構成に整理してください。連続検索で古い応答が後から返っても最新の検索結果を維持してください。英日表示、初回読込、空・失敗・再試行、READMEのホストインターフェースを維持し、無関係な機能や既存SDK管理は変更しないでください。必要なテストを追加して検証してください。",
+      "expected_output": "段階的に責務分離された検索画面、古い応答の排除、既存動作とSDK管理の保持。",
+      "assertions": [
+        {
+          "id": "riverpod",
+          "category": "convention",
+          "text": "Remote search state moves out of Widget into Riverpod-owned state with lifecycle handling."
+        },
+        {
+          "id": "boundaries",
+          "category": "convention",
+          "text": "Transport JSON is mapped behind a repository/data adapter and does not leak into UI/domain."
+        },
+        {
+          "id": "local_state",
+          "category": "convention",
+          "text": "Disposable widget-local text state uses flutter_hooks and is disposed correctly."
+        },
+        {
+          "id": "l10n",
+          "category": "convention",
+          "text": "English/Japanese visible messages use gen_l10n ARBs and context.l access."
+        },
+        {
+          "id": "incremental",
+          "category": "functional",
+          "text": "Changes stay within search-related scope and preserve existing SDK manager and unrelated behavior."
+        },
+        {
+          "id": "race",
+          "category": "functional",
+          "text": "Reversed completion of overlapping searches cannot overwrite the latest requested search."
+        }
+      ],
+      "files": [
+        "evals/fixtures/common",
+        "evals/fixtures/refactor"
+      ]
+    }
+  ]
+}
