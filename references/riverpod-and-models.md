@@ -34,4 +34,4 @@ Use Riverpod for state shared across widgets, business/application state, asynch
 - Use Freezed for immutable domain entities, value objects, and complex app state where equality, copy/update semantics, or unions help.
 - Prefer explicit fields and domain-oriented names. Keep JSON/API naming and nullability quirks out of domain types.
 - Generated Freezed files are never edited by hand. Regenerate after changing annotations or part declarations.
-- Avoid creating duplicate data classes where a simple value can be represented safely by a Dart record or small immutable class and does not cross a meaningful boundary.
+- Any hand-written model that crosses a layer, or is part of a public library API, uses Freezed, including small ones. A Dart record is acceptable only for a private tuple used within one file. Do not add a plain immutable class as a lighter alternative to Freezed.

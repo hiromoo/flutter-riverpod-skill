@@ -43,4 +43,4 @@ Keep a feature's implementation together. Put code in `core` only when it is gen
 5. Build focused widgets that watch only the state they render, localize all user-facing text, and use shared theme tokens.
 6. Add tests at the repository, notifier, widget, or route boundary appropriate to the behavior.
 
-For existing apps, preserve working boundaries and migrate one feature at a time. Do not perform a broad restructuring as an incidental part of unrelated feature work.
+For existing apps, preserve working boundaries and migrate one feature at a time. Do not perform a broad restructuring as an incidental part of unrelated feature work. Code that the task itself creates or rewrites still follows the full convention checklist in `SKILL.md`. Incremental migration narrows the scope of a change; it does not lower the standard inside that scope.
