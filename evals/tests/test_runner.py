@@ -70,6 +70,47 @@ class RunnerTests(unittest.TestCase):
         self.assertTrue((run/'downstream-attempt-1/verification.json').exists())
         self.assertTrue((run/'downstream-attempt-1/checks/analysis.log').exists())
 
+    def test_tree_diff_reports_changes_and_ignores_caches(self):
+        a,b=self.root/'a',self.root/'b'
+        for d in (a,b):
+            (d/'lib').mkdir(parents=True)
+            (d/'lib/same.dart').write_text('same')
+        self.assertEqual(runner.tree_diff(a,b),[])
+        (b/'.dart_tool').mkdir()
+        (b/'.dart_tool/cache').write_text('x')
+        (b/'pubspec.lock').write_text('x')
+        self.assertEqual(runner.tree_diff(a,b),[])
+        (a/'lib/same.dart').write_text('changed')
+        (a/'test_only.dart').write_text('kept')
+        (b/'lib/extra.dart').write_text('new')
+        self.assertEqual(runner.tree_diff(a,b),['lib/extra.dart','lib/same.dart','test_only.dart'])
+
+    def test_regeneration_requires_entry_point(self):
+        run=self.root/'run'
+        (run/'outputs/packages/reading_api').mkdir(parents=True)
+        checks=[]
+        runner.verify_regeneration(run,lambda *a,**k:self.fail('must not run'),checks)
+        self.assertEqual(checks[0]['id'],'api_regeneration')
+        self.assertEqual(checks[0]['status'],'failed')
+
+    def test_regeneration_diff_is_recorded(self):
+        run=self.root/'run'
+        pkg=run/'outputs/packages/reading_api/lib'
+        pkg.mkdir(parents=True)
+        (pkg/'api.dart').write_text('v1')
+        (run/'outputs/tool').mkdir()
+        (run/'outputs/tool/generate_api.sh').write_text("printf v2 > packages/reading_api/lib/api.dart\n")
+        checks=[]
+        def check(name,cmd,cwd):
+            result=runner.command(cmd,cwd,run/'checks'/f'{name}.log')
+            checks.append(dict(result,id=name))
+            return result['status']=='completed'
+        runner.verify_regeneration(run,check,checks)
+        diff=next(c for c in checks if c['id']=='api_regeneration_diff')
+        self.assertEqual(diff['status'],'failed')
+        self.assertEqual(diff['changed'],['lib/api.dart'])
+        self.assertIn('lib/api.dart',(run/'checks/api_regeneration_diff.log').read_text())
+
     def test_grade_requires_all_ids_once(self):
         case=self.config['evals'][0]
         grade={'assertions':[{'id':a['id'],'status':'pass','evidence':'lib/file.dart:1'} for a in case['assertions']]}

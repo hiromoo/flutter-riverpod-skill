@@ -16,6 +16,8 @@ import time
 ROOT = Path(__file__).resolve().parents[1]
 CONDITIONS = ('without_skill', 'with_skill')
 IGNORED = shutil.ignore_patterns('.git', '.dart_tool', 'build', '.fvm', 'node_modules', '__pycache__')
+REGEN_SCRIPT = 'tool/generate_api.sh'
+REGEN_IGNORED = {'.dart_tool', 'build', 'pubspec.lock'}
 
 
 def read(path):
@@ -79,6 +81,35 @@ def command(argv, cwd, log, timeout=1800, env=None, stdin=None):
         log.write_text(str(e))
         return dict(status='blocked', exit_code=None, duration_ms=round((time.monotonic()-started)*1000),
                     command=argv, log=log.name, error=str(e))
+
+
+def tree_diff(a, b):
+    """Relative paths whose presence or bytes differ between two trees, ignoring build caches."""
+    def files(root):
+        root = Path(root)
+        if not root.is_dir():
+            return {}
+        return {p.relative_to(root).as_posix(): p for p in root.rglob('*')
+                if p.is_file() and not REGEN_IGNORED.intersection(p.relative_to(root).parts)}
+    fa, fb = files(a), files(b)
+    return sorted(n for n in fa.keys() | fb.keys()
+                  if n not in fa or n not in fb or fa[n].read_bytes() != fb[n].read_bytes())
+
+
+def verify_regeneration(run, check, checks):
+    """Rerun the solver's regeneration entry point on a clean copy and diff the generated package."""
+    regen = Path(tempfile.mkdtemp(prefix='skill-regen-', dir='/tmp'))
+    copy_project(run/'outputs', regen)
+    if not (regen/REGEN_SCRIPT).is_file():
+        checks.append(dict(id='api_regeneration', status='failed', error=f'{REGEN_SCRIPT} absent'))
+        return
+    if not check('api_regeneration', ['bash', REGEN_SCRIPT], regen):
+        return
+    changed = tree_diff(run/'outputs/packages/reading_api', regen/'packages/reading_api')
+    log = run/'checks/api_regeneration_diff.log'
+    log.write_text('\n'.join(changed)+'\n' if changed else 'No differences in packages/reading_api after regeneration.\n')
+    checks.append(dict(id='api_regeneration_diff', status='failed' if changed else 'completed',
+                       changed=changed[:50], log=log.name))
 
 
 def usage(log):
@@ -262,6 +293,7 @@ def verify(case, run, sdk, env):
                     check('api_tests', [dart, 'test'], pkg)
             else:
                 checks.append(dict(id='api_package', status='failed', error='packages/reading_api/pubspec.yaml absent'))
+            verify_regeneration(run, check, checks)
     before, after = read(run/'input-hashes.json'), hashes(run/'outputs')
     protected = ['.fvmrc', 'lib/catalog_gateway.dart']
     protected += ['api/openapi.yaml'] if case['id'] == 'api' else ['lib/unrelated.dart'] if case['id'] == 'refactor' else []
