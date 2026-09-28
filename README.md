@@ -67,4 +67,4 @@ This repository is released under the [MIT License](LICENSE).
 
 Reproducible implementation evaluations compare GPT-6 Luna with and without this skill, with GPT-6 Astra grading and independent Flutter/Dart checks. See [the evaluation guide](EVALUATION.md) for the fixed cases, commands, and limitations.
 
-The [initial measured result](benchmarks/iteration-1.md) found higher functional and convention pass rates with the skill, while also showing substantial time/token overhead and several conventions that Luna still applied inconsistently.
+The [initial measured result](benchmarks/iteration-1.md) found higher functional and convention pass rates with the skill, while also showing substantial time/token overhead and several conventions that Luna still applied inconsistently. After adding a convention checklist, [iteration 2](benchmarks/iteration-2.md) raised the skill's convention pass rate from 27.3% to 81.8% with unchanged functional results, though one refactor run regressed on a disposal check.
