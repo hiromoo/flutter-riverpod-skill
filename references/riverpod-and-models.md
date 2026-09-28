@@ -19,7 +19,7 @@ Use Riverpod for state shared across widgets, business/application state, asynch
 - Do not mirror the same mutable state in a hook and a provider. Keep one source of truth and derive other values.
 - Widget code should use `ref.watch` for values rendered by the widget and `ref.read` to dispatch a command from callbacks. Use `select` or smaller widgets when a broad state dependency causes unnecessary rebuilds.
 - Use provider families for parameterized resources and choose auto-dispose/lifetime behavior deliberately. Long-lived providers should represent intentionally shared app state, not be the accidental default for screen-scoped data.
-- Register cleanup for subscriptions, timers, controllers, and other resources with the relevant provider or hook lifecycle. Guard asynchronous work against stale parameters or disposed state where applicable.
+- Register cleanup for subscriptions, timers, controllers, and other resources with the relevant provider or hook lifecycle. Guard asynchronous work against stale parameters and disposal. In notifiers, check `ref.mounted` after each `await` before assigning `state` or using `ref`. Test completion after dispose alongside out-of-order completion.
 
 ## Async and error state
 
@@ -34,4 +34,4 @@ Use Riverpod for state shared across widgets, business/application state, asynch
 - Use Freezed for immutable domain entities, value objects, and complex app state where equality, copy/update semantics, or unions help.
 - Prefer explicit fields and domain-oriented names. Keep JSON/API naming and nullability quirks out of domain types.
 - Generated Freezed files are never edited by hand. Regenerate after changing annotations or part declarations.
-- Any hand-written model that crosses a layer, or is part of a public library API, uses Freezed, including small ones. A Dart record is acceptable only for a private tuple used within one file. Do not add a plain immutable class as a lighter alternative to Freezed.
+- Any hand-written model that crosses a layer, or is part of a public library API, uses Freezed, including small ones. When the task rewrites an existing public model, convert it with a `const factory` that keeps the published named parameters. A Dart record is acceptable only for a private tuple used within one file. Do not add a plain immutable class as a lighter alternative to Freezed.
