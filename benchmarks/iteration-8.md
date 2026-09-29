@@ -85,12 +85,55 @@ failed immediately because the runner was started from the wrong working
 directory; no model was called. The third launch passed both preflights with
 `NO_SKILLS` and completed all six runs without retries.
 
+## Repeated runs
+
+To check whether the full pass is stable, the same skill files were run two
+more times on 2026-09-29 and 2026-09-30 (`iteration-8-rep2` and
+`iteration-8-rep3`). Commit `d674807` changed the runner between the first
+run and the repeats; it only detects skill-set changes around Codex calls.
+Every preflight passed, and no run recorded a skill-set change.
+
+| Run | Condition | Functional | Conventions | Mechanical | Solver time | Solver tokens |
+|---|---|---:|---:|---:|---:|---:|
+| 1 | Without skill | 6/7 | 1/11 | 1/3 | 586.9 s | 1.32 M |
+| 1 | With skill | 7/7 | 11/11 | 3/3 | 729.9 s | 2.26 M |
+| 2 | Without skill | 6/7 | 1/11 | 2/3 | 459.9 s | 0.97 M |
+| 2 | With skill | 6/7 | 10/11 | 3/3 | 682.3 s | 1.67 M |
+| 3 | Without skill | 6/7 | 1/11 | 1/3 | 462.7 s | 1.03 M |
+| 3 | With skill | 7/7 | 10/11 | 3/3 | 765.6 s | 2.15 M |
+| **Total** | **Without skill** | **18/21** | **3/33** | **4/9** | **1,509.5 s** | **3.32 M** |
+| **Total** | **With skill** | **20/21** | **31/33** | **9/9** | **2,177.8 s** | **6.08 M** |
+
+The full pass did not repeat. Across three runs, the skill-assisted results
+were strong and consistent in mechanical checks (9/9) and nearly so in
+conventions (31/33). Solver time stayed at about 1.4 times the baseline
+overall. Two kinds of miss recurred:
+
+- **Freezed `ReadingRecord` (2 of 3 runs).** In runs 2 and 3, the fixture's
+  pre-existing plain `ReadingRecord` class was left untouched. Neither run
+  executed the Freezed grep from workflow step 5, and neither final report
+  mentioned Freezed or the checklist. The Freezed conversion in run 1 came
+  from a decision made during implementation, not from the final self-check.
+  In none of the three runs did the final report list the triggered checklist
+  rows as workflow step 6 requires. The model follows the concrete content of
+  the checklist rows much more reliably than the workflow steps around them.
+- **Feature behavior (run 2).** Search state was a provider family keyed by
+  query. Submitting the same query again only reassigned the same key, so no
+  new search started, which the fixture README requires. The detail screen's
+  error state also had no retry action. The solver's tests did not cover
+  either case.
+
 ## Follow-up
 
-- Remove the preflight race: have Codex finish extracting system skills
-  before the runner builds its disable list.
-- Repeat this skill version several times to see whether the full pass is
-  stable, since each iteration so far ran each case and condition once.
+- Move the Freezed requirement for existing public models into the checklist
+  row itself as a concrete trigger, for example "a file containing a plain
+  public data class is edited", instead of relying on the final self-check
+  step.
+- With provider families, state that resubmitting the same parameters must
+  still start a new request (invalidate or refresh the key), and that every
+  error state needs a retry action.
+- Keep repeating each skill version at least three times before drawing
+  conclusions from a single full pass.
 
 ## Reproducibility and limits
 
@@ -100,6 +143,6 @@ transcripts, outputs, checks, usage records, and grades are stored under the
 gitignored `eval-results/iteration-8/` directory. The skill snapshot there
 matches the skill files at commit `ae44f28`.
 
-Each case and condition ran once, so a single full pass does not show that
-the result is stable. The same model family served as solver and judge, and
-no human review has been recorded.
+The first run alone showed a full pass. The repeated runs above show that it
+was not stable. The same model family served as solver and judge, and no
+human review has been recorded.
