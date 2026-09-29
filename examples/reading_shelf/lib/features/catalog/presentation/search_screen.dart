@@ -37,13 +37,13 @@ class SearchScreen extends HookConsumerWidget {
                 TextField(
                   controller: controller,
                   textInputAction: TextInputAction.search,
-                  onSubmitted: (value) => _search(context, value),
+                  onSubmitted: (value) => _search(context, ref, value),
                   decoration: InputDecoration(
                     hintText: context.l.searchHint,
                     prefixIcon: const Icon(Icons.search_rounded),
                     suffixIcon: IconButton(
                       tooltip: context.l.search,
-                      onPressed: () => _search(context, controller.text),
+                      onPressed: () => _search(context, ref, controller.text),
                       icon: const Icon(Icons.arrow_forward_rounded),
                     ),
                   ),
@@ -67,8 +67,15 @@ class SearchScreen extends HookConsumerWidget {
     );
   }
 
-  void _search(BuildContext context, String value) =>
-      SearchRoute(query: value.trim().isEmpty ? null : value.trim(), page: 1).go(context);
+  void _search(BuildContext context, WidgetRef ref, String value) {
+    final next = value.trim();
+    // Navigating to the current route would reuse the cached family key, so refresh it instead.
+    if (next == query && page == 1) {
+      ref.invalidate(bookSearchProvider(query: query, page: page));
+      return;
+    }
+    SearchRoute(query: next.isEmpty ? null : next, page: 1).go(context);
+  }
 }
 
 class _Results extends StatelessWidget {
