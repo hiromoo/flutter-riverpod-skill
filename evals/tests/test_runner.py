@@ -111,6 +111,45 @@ class RunnerTests(unittest.TestCase):
         self.assertEqual(diff['changed'],['lib/api.dart'])
         self.assertIn('lib/api.dart',(run/'checks/api_regeneration_diff.log').read_text())
 
+    def test_run_codex_records_skill_set_change(self):
+        calls=iter(['before','after'])
+        original=(runner.skill_overrides,runner.command)
+        self.addCleanup(lambda:(setattr(runner,'skill_overrides',original[0]),setattr(runner,'command',original[1])))
+        runner.skill_overrides=lambda:next(calls)
+        seen={}
+        def fake_command(argv,*args,**kwargs):
+            seen['argv']=argv
+            return {'status':'completed'}
+        runner.command=fake_command
+        result=runner.run_codex(self.config['solver'],self.root,self.root/'last',self.root/'log',1,None,'x')
+        self.assertTrue(result['skill_set_changed'])
+        self.assertIn('before',seen['argv'])
+
+    def test_preflight_retries_once_after_skill_set_change(self):
+        original=runner.run_codex
+        self.addCleanup(setattr,runner,'run_codex',original)
+        attempts=[]
+        def fake_run(role,cwd,last,log,*args,**kwargs):
+            attempts.append(1)
+            last.write_text('plugin-creator' if len(attempts)==1 else 'NO_SKILLS')
+            log.write_text('{}')
+            return {'status':'completed','skill_set_changed':len(attempts)==1}
+        runner.run_codex=fake_run
+        result=runner.preflight_role('solver',self.config['solver'],self.root,self.root,None)
+        self.assertEqual(len(attempts),2)
+        self.assertTrue(result['isolated'])
+        self.assertTrue((self.root/'preflight-solver-stale.txt').exists())
+        self.assertTrue((self.root/'preflight-solver-stale.jsonl').exists())
+
+    def test_preflight_fails_if_skill_set_keeps_changing(self):
+        original=runner.run_codex
+        self.addCleanup(setattr,runner,'run_codex',original)
+        def fake_run(role,cwd,last,log,*args,**kwargs):
+            last.write_text('NO_SKILLS')
+            return {'status':'completed','skill_set_changed':True}
+        runner.run_codex=fake_run
+        self.assertFalse(runner.preflight_role('judge',self.config['judge'],self.root,self.root,None)['isolated'])
+
     def test_grade_requires_all_ids_once(self):
         case=self.config['evals'][0]
         grade={'assertions':[{'id':a['id'],'status':'pass','evidence':'lib/file.dart:1'} for a in case['assertions']]}

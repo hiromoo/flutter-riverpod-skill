@@ -178,12 +178,12 @@ def skill_overrides():
     return 'skills.config=[' + ','.join('{path='+json.dumps(p)+',enabled=false}' for p in sorted(paths)) + ']'
 
 
-def codex_args(role, cwd, last, sdk=None, schema=None):
+def codex_args(role, cwd, last, sdk=None, schema=None, overrides=None):
     args = ['codex', '--no-daemon', '-a', 'never', 'exec', '--ignore-user-config', '--ephemeral',
             '--skip-git-repo-check', '-C', str(cwd), '-s', 'read-only' if schema else 'workspace-write',
             '--enable', 'skip_host_skill_discovery', '--disable', 'plugins', '--disable', 'apps',
             '--disable', 'memories', '--disable', 'multi_agent', '--disable', 'hooks',
-            '-c', 'project_doc_max_bytes=0', '-c', skill_overrides(),
+            '-c', 'project_doc_max_bytes=0', '-c', overrides or skill_overrides(),
             '-c', 'web_search="disabled"', '-c', 'suppress_unstable_features_warning=true',
             '-c', 'model_reasoning_effort='+json.dumps(role['reasoning_effort']),
             '-m', role['model'], '--json', '-o', str(last)]
@@ -198,6 +198,34 @@ def codex_args(role, cwd, last, sdk=None, schema=None):
     if schema:
         args += ['--output-schema', str(schema)]
     return args + ['-']
+
+
+def run_codex(role, cwd, last, log, timeout, env, stdin, sdk=None, schema=None):
+    """Run Codex and record whether the standard-skill set changed while it ran.
+
+    Codex can re-extract its system skills at startup, after the disable list was built,
+    which would leave a new skill enabled for that run.
+    """
+    overrides = skill_overrides()
+    result = command(codex_args(role, cwd, last, sdk, schema, overrides), cwd, log, timeout, env, stdin)
+    result['skill_set_changed'] = skill_overrides() != overrides
+    return result
+
+
+def preflight_role(name, role, work, output, env):
+    """Check that a model role sees no skills, retrying once if the skill set changed mid-run."""
+    response, log = output/f'preflight-{name}.txt', output/f'preflight-{name}.jsonl'
+    for attempt in (1, 2):
+        result = run_codex(role, work, response, log, 120, env,
+                           'Do not use tools. List only names from the available-skills catalog in your initial context. '
+                           'If no skills are available, reply exactly NO_SKILLS. Do not search disk.')
+        result['isolated'] = (response.exists() and response.read_text().strip() == 'NO_SKILLS'
+                              and not result['skill_set_changed'])
+        if not result['skill_set_changed'] or attempt == 2:
+            return result
+        for path in (response, log):
+            if path.exists():
+                path.rename(path.with_name(path.stem+'-stale'+path.suffix))
 
 
 def copy_project(source, target):
@@ -248,8 +276,8 @@ def solve(case, condition, config, run, sdk, env):
     if condition == 'with_skill':
         prompt += '\n\nUse the supplied skill: '+str(skill/'SKILL.md')+'. Read focused references as needed.'
     (run/'prompt.txt').write_text(prompt)
-    result = command(codex_args(config['solver'], project, run/'response.md', sdk), project,
-                     run/'transcript.jsonl', config['timeout_seconds'], env, prompt)
+    result = run_codex(config['solver'], project, run/'response.md', run/'transcript.jsonl',
+                       config['timeout_seconds'], env, prompt, sdk)
     result.update(workspace=str(work), model=config['solver'], usage=usage(run/'transcript.jsonl'))
     copy_project(project, run/'outputs')
     save(run/'output-hashes.json', hashes(run/'outputs'))
@@ -341,8 +369,8 @@ def judge(case, config, run, env):
               'Do not read other directories, personal skills, or other runs. Do not spawn agents. '
               'Use Japanese for evidence and summary. Return JSON matching schema.json.')
     (run/'judge-prompt.txt').write_text(prompt)
-    result = command(codex_args(config['judge'], work, run/'grading.json', schema=work/'schema.json'), work,
-                     run/'judge-transcript.jsonl', config['timeout_seconds'], env, prompt)
+    result = run_codex(config['judge'], work, run/'grading.json', run/'judge-transcript.jsonl',
+                       config['timeout_seconds'], env, prompt, schema=work/'schema.json')
     result.update(model=config['judge'], usage=usage(run/'judge-transcript.jsonl'))
     if result['status'] == 'completed':
         try:
@@ -455,13 +483,7 @@ def main():
         work = Path(tempfile.mkdtemp(prefix='skill-preflight-', dir='/tmp'))
         preflight = {}
         for role in ('solver', 'judge'):
-            response = output/f'preflight-{role}.txt'
-            result = command(codex_args(config[role], work, response), work,
-                             output/f'preflight-{role}.jsonl', 120, env,
-                             'Do not use tools. List only names from the available-skills catalog in your initial context. '
-                             'If no skills are available, reply exactly NO_SKILLS. Do not search disk.')
-            result['isolated'] = response.exists() and response.read_text().strip() == 'NO_SKILLS'
-            preflight[role] = result
+            preflight[role] = preflight_role(role, config[role], work, output, env)
         save(output/'preflight.json', preflight)
     if args.action == 'run' and not all(x['status']=='completed' and x['isolated'] for x in read(output/'preflight.json').values()):
         raise SystemExit('Model availability / skill isolation preflight failed; see preflight.json')
