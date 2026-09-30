@@ -70,6 +70,86 @@ class RunnerTests(unittest.TestCase):
         self.assertTrue((run/'downstream-attempt-1/verification.json').exists())
         self.assertTrue((run/'downstream-attempt-1/checks/analysis.log').exists())
 
+    def test_tree_diff_reports_changes_and_ignores_caches(self):
+        a,b=self.root/'a',self.root/'b'
+        for d in (a,b):
+            (d/'lib').mkdir(parents=True)
+            (d/'lib/same.dart').write_text('same')
+        self.assertEqual(runner.tree_diff(a,b),[])
+        (b/'.dart_tool').mkdir()
+        (b/'.dart_tool/cache').write_text('x')
+        (b/'pubspec.lock').write_text('x')
+        self.assertEqual(runner.tree_diff(a,b),[])
+        (a/'lib/same.dart').write_text('changed')
+        (a/'test_only.dart').write_text('kept')
+        (b/'lib/extra.dart').write_text('new')
+        self.assertEqual(runner.tree_diff(a,b),['lib/extra.dart','lib/same.dart','test_only.dart'])
+
+    def test_regeneration_requires_entry_point(self):
+        run=self.root/'run'
+        (run/'outputs/packages/reading_api').mkdir(parents=True)
+        checks=[]
+        runner.verify_regeneration(run,lambda *a,**k:self.fail('must not run'),checks)
+        self.assertEqual(checks[0]['id'],'api_regeneration')
+        self.assertEqual(checks[0]['status'],'failed')
+
+    def test_regeneration_diff_is_recorded(self):
+        run=self.root/'run'
+        pkg=run/'outputs/packages/reading_api/lib'
+        pkg.mkdir(parents=True)
+        (pkg/'api.dart').write_text('v1')
+        (run/'outputs/tool').mkdir()
+        (run/'outputs/tool/generate_api.sh').write_text("printf v2 > packages/reading_api/lib/api.dart\n")
+        checks=[]
+        def check(name,cmd,cwd):
+            result=runner.command(cmd,cwd,run/'checks'/f'{name}.log')
+            checks.append(dict(result,id=name))
+            return result['status']=='completed'
+        runner.verify_regeneration(run,check,checks)
+        diff=next(c for c in checks if c['id']=='api_regeneration_diff')
+        self.assertEqual(diff['status'],'failed')
+        self.assertEqual(diff['changed'],['lib/api.dart'])
+        self.assertIn('lib/api.dart',(run/'checks/api_regeneration_diff.log').read_text())
+
+    def test_run_codex_records_skill_set_change(self):
+        calls=iter(['before','after'])
+        original=(runner.skill_overrides,runner.command)
+        self.addCleanup(lambda:(setattr(runner,'skill_overrides',original[0]),setattr(runner,'command',original[1])))
+        runner.skill_overrides=lambda:next(calls)
+        seen={}
+        def fake_command(argv,*args,**kwargs):
+            seen['argv']=argv
+            return {'status':'completed'}
+        runner.command=fake_command
+        result=runner.run_codex(self.config['solver'],self.root,self.root/'last',self.root/'log',1,None,'x')
+        self.assertTrue(result['skill_set_changed'])
+        self.assertIn('before',seen['argv'])
+
+    def test_preflight_retries_once_after_skill_set_change(self):
+        original=runner.run_codex
+        self.addCleanup(setattr,runner,'run_codex',original)
+        attempts=[]
+        def fake_run(role,cwd,last,log,*args,**kwargs):
+            attempts.append(1)
+            last.write_text('plugin-creator' if len(attempts)==1 else 'NO_SKILLS')
+            log.write_text('{}')
+            return {'status':'completed','skill_set_changed':len(attempts)==1}
+        runner.run_codex=fake_run
+        result=runner.preflight_role('solver',self.config['solver'],self.root,self.root,None)
+        self.assertEqual(len(attempts),2)
+        self.assertTrue(result['isolated'])
+        self.assertTrue((self.root/'preflight-solver-stale.txt').exists())
+        self.assertTrue((self.root/'preflight-solver-stale.jsonl').exists())
+
+    def test_preflight_fails_if_skill_set_keeps_changing(self):
+        original=runner.run_codex
+        self.addCleanup(setattr,runner,'run_codex',original)
+        def fake_run(role,cwd,last,log,*args,**kwargs):
+            last.write_text('NO_SKILLS')
+            return {'status':'completed','skill_set_changed':True}
+        runner.run_codex=fake_run
+        self.assertFalse(runner.preflight_role('judge',self.config['judge'],self.root,self.root,None)['isolated'])
+
     def test_grade_requires_all_ids_once(self):
         case=self.config['evals'][0]
         grade={'assertions':[{'id':a['id'],'status':'pass','evidence':'lib/file.dart:1'} for a in case['assertions']]}

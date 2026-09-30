@@ -50,9 +50,40 @@ void main() {
     tester.view.resetPhysicalSize();
     tester.view.resetDevicePixelRatio();
   });
+
+  testWidgets('resubmitting the same query searches again', (tester) async {
+    tester.view.physicalSize = const Size(1280, 900);
+    tester.view.devicePixelRatio = 1;
+    final books = _BooksRepository();
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        booksRepositoryProvider.overrideWith((ref) => books),
+        readingRepositoryProvider.overrideWith((ref) => _ReadingRepository()),
+        settingsRepositoryProvider.overrideWith((ref) => _SettingsRepository()),
+      ],
+      child: const ReadingShelfApp(),
+    ));
+    await tester.pumpAndSettle();
+    final initial = books.searches;
+
+    await tester.enterText(find.byType(TextField), 'atlas');
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pumpAndSettle();
+    expect(books.searches, initial + 1);
+
+    await tester.showKeyboard(find.byType(TextField));
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pumpAndSettle();
+    expect(books.searches, initial + 2);
+
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
+  });
 }
 
 class _BooksRepository implements BooksRepository {
+  int searches = 0;
+
   static const _book = Book(id: 'quiet-atlas', title: 'The Quiet Atlas', author: 'Mina Sato',
       description: 'A mapmaker finds a hidden coastline.', pageCount: 285, publishedYear: 2024, genre: 'Fiction');
 
@@ -60,8 +91,10 @@ class _BooksRepository implements BooksRepository {
   Future<Book?> getById(String id) async => id == _book.id ? _book : null;
 
   @override
-  Future<BookSearchPage> search({required String query, required int page}) async =>
-      const BookSearchPage(items: [_book], page: 1, pageSize: 12, total: 1);
+  Future<BookSearchPage> search({required String query, required int page}) async {
+    searches++;
+    return const BookSearchPage(items: [_book], page: 1, pageSize: 12, total: 1);
+  }
 }
 
 class _ReadingRepository implements ReadingRepository {

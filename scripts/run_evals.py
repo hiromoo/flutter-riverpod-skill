@@ -16,6 +16,8 @@ import time
 ROOT = Path(__file__).resolve().parents[1]
 CONDITIONS = ('without_skill', 'with_skill')
 IGNORED = shutil.ignore_patterns('.git', '.dart_tool', 'build', '.fvm', 'node_modules', '__pycache__')
+REGEN_SCRIPT = 'tool/generate_api.sh'
+REGEN_IGNORED = {'.dart_tool', 'build', 'pubspec.lock'}
 
 
 def read(path):
@@ -79,6 +81,35 @@ def command(argv, cwd, log, timeout=1800, env=None, stdin=None):
         log.write_text(str(e))
         return dict(status='blocked', exit_code=None, duration_ms=round((time.monotonic()-started)*1000),
                     command=argv, log=log.name, error=str(e))
+
+
+def tree_diff(a, b):
+    """Relative paths whose presence or bytes differ between two trees, ignoring build caches."""
+    def files(root):
+        root = Path(root)
+        if not root.is_dir():
+            return {}
+        return {p.relative_to(root).as_posix(): p for p in root.rglob('*')
+                if p.is_file() and not REGEN_IGNORED.intersection(p.relative_to(root).parts)}
+    fa, fb = files(a), files(b)
+    return sorted(n for n in fa.keys() | fb.keys()
+                  if n not in fa or n not in fb or fa[n].read_bytes() != fb[n].read_bytes())
+
+
+def verify_regeneration(run, check, checks):
+    """Rerun the solver's regeneration entry point on a clean copy and diff the generated package."""
+    regen = Path(tempfile.mkdtemp(prefix='skill-regen-', dir='/tmp'))
+    copy_project(run/'outputs', regen)
+    if not (regen/REGEN_SCRIPT).is_file():
+        checks.append(dict(id='api_regeneration', status='failed', error=f'{REGEN_SCRIPT} absent'))
+        return
+    if not check('api_regeneration', ['bash', REGEN_SCRIPT], regen):
+        return
+    changed = tree_diff(run/'outputs/packages/reading_api', regen/'packages/reading_api')
+    log = run/'checks/api_regeneration_diff.log'
+    log.write_text('\n'.join(changed)+'\n' if changed else 'No differences in packages/reading_api after regeneration.\n')
+    checks.append(dict(id='api_regeneration_diff', status='failed' if changed else 'completed',
+                       changed=changed[:50], log=log.name))
 
 
 def usage(log):
@@ -147,12 +178,12 @@ def skill_overrides():
     return 'skills.config=[' + ','.join('{path='+json.dumps(p)+',enabled=false}' for p in sorted(paths)) + ']'
 
 
-def codex_args(role, cwd, last, sdk=None, schema=None):
+def codex_args(role, cwd, last, sdk=None, schema=None, overrides=None):
     args = ['codex', '--no-daemon', '-a', 'never', 'exec', '--ignore-user-config', '--ephemeral',
             '--skip-git-repo-check', '-C', str(cwd), '-s', 'read-only' if schema else 'workspace-write',
             '--enable', 'skip_host_skill_discovery', '--disable', 'plugins', '--disable', 'apps',
             '--disable', 'memories', '--disable', 'multi_agent', '--disable', 'hooks',
-            '-c', 'project_doc_max_bytes=0', '-c', skill_overrides(),
+            '-c', 'project_doc_max_bytes=0', '-c', overrides or skill_overrides(),
             '-c', 'web_search="disabled"', '-c', 'suppress_unstable_features_warning=true',
             '-c', 'model_reasoning_effort='+json.dumps(role['reasoning_effort']),
             '-m', role['model'], '--json', '-o', str(last)]
@@ -167,6 +198,34 @@ def codex_args(role, cwd, last, sdk=None, schema=None):
     if schema:
         args += ['--output-schema', str(schema)]
     return args + ['-']
+
+
+def run_codex(role, cwd, last, log, timeout, env, stdin, sdk=None, schema=None):
+    """Run Codex and record whether the standard-skill set changed while it ran.
+
+    Codex can re-extract its system skills at startup, after the disable list was built,
+    which would leave a new skill enabled for that run.
+    """
+    overrides = skill_overrides()
+    result = command(codex_args(role, cwd, last, sdk, schema, overrides), cwd, log, timeout, env, stdin)
+    result['skill_set_changed'] = skill_overrides() != overrides
+    return result
+
+
+def preflight_role(name, role, work, output, env):
+    """Check that a model role sees no skills, retrying once if the skill set changed mid-run."""
+    response, log = output/f'preflight-{name}.txt', output/f'preflight-{name}.jsonl'
+    for attempt in (1, 2):
+        result = run_codex(role, work, response, log, 120, env,
+                           'Do not use tools. List only names from the available-skills catalog in your initial context. '
+                           'If no skills are available, reply exactly NO_SKILLS. Do not search disk.')
+        result['isolated'] = (response.exists() and response.read_text().strip() == 'NO_SKILLS'
+                              and not result['skill_set_changed'])
+        if not result['skill_set_changed'] or attempt == 2:
+            return result
+        for path in (response, log):
+            if path.exists():
+                path.rename(path.with_name(path.stem+'-stale'+path.suffix))
 
 
 def copy_project(source, target):
@@ -217,8 +276,8 @@ def solve(case, condition, config, run, sdk, env):
     if condition == 'with_skill':
         prompt += '\n\nUse the supplied skill: '+str(skill/'SKILL.md')+'. Read focused references as needed.'
     (run/'prompt.txt').write_text(prompt)
-    result = command(codex_args(config['solver'], project, run/'response.md', sdk), project,
-                     run/'transcript.jsonl', config['timeout_seconds'], env, prompt)
+    result = run_codex(config['solver'], project, run/'response.md', run/'transcript.jsonl',
+                       config['timeout_seconds'], env, prompt, sdk)
     result.update(workspace=str(work), model=config['solver'], usage=usage(run/'transcript.jsonl'))
     copy_project(project, run/'outputs')
     save(run/'output-hashes.json', hashes(run/'outputs'))
@@ -262,6 +321,7 @@ def verify(case, run, sdk, env):
                     check('api_tests', [dart, 'test'], pkg)
             else:
                 checks.append(dict(id='api_package', status='failed', error='packages/reading_api/pubspec.yaml absent'))
+            verify_regeneration(run, check, checks)
     before, after = read(run/'input-hashes.json'), hashes(run/'outputs')
     protected = ['.fvmrc', 'lib/catalog_gateway.dart']
     protected += ['api/openapi.yaml'] if case['id'] == 'api' else ['lib/unrelated.dart'] if case['id'] == 'refactor' else []
@@ -309,8 +369,8 @@ def judge(case, config, run, env):
               'Do not read other directories, personal skills, or other runs. Do not spawn agents. '
               'Use Japanese for evidence and summary. Return JSON matching schema.json.')
     (run/'judge-prompt.txt').write_text(prompt)
-    result = command(codex_args(config['judge'], work, run/'grading.json', schema=work/'schema.json'), work,
-                     run/'judge-transcript.jsonl', config['timeout_seconds'], env, prompt)
+    result = run_codex(config['judge'], work, run/'grading.json', run/'judge-transcript.jsonl',
+                       config['timeout_seconds'], env, prompt, schema=work/'schema.json')
     result.update(model=config['judge'], usage=usage(run/'judge-transcript.jsonl'))
     if result['status'] == 'completed':
         try:
@@ -423,13 +483,7 @@ def main():
         work = Path(tempfile.mkdtemp(prefix='skill-preflight-', dir='/tmp'))
         preflight = {}
         for role in ('solver', 'judge'):
-            response = output/f'preflight-{role}.txt'
-            result = command(codex_args(config[role], work, response), work,
-                             output/f'preflight-{role}.jsonl', 120, env,
-                             'Do not use tools. List only names from the available-skills catalog in your initial context. '
-                             'If no skills are available, reply exactly NO_SKILLS. Do not search disk.')
-            result['isolated'] = response.exists() and response.read_text().strip() == 'NO_SKILLS'
-            preflight[role] = result
+            preflight[role] = preflight_role(role, config[role], work, output, env)
         save(output/'preflight.json', preflight)
     if args.action == 'run' and not all(x['status']=='completed' and x['isolated'] for x in read(output/'preflight.json').values()):
         raise SystemExit('Model availability / skill isolation preflight failed; see preflight.json')

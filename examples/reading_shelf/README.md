@@ -49,7 +49,7 @@ fvm dart test
 
 OpenAPI Generator が出力したコードは手編集せず、生成 serializer もコミットします。`scripts/validate_generated.sh` は再生成差分と package の解析を検証します。
 
-このサンプルでは generator の削除対象から手管理の `analysis_options.yaml` を `.openapi-generator-ignore` で除外しています。再生成後も設定・テスト・README が残ることを確認してください。`built_value` の null 許容値は `Optional<T>.isPresent` を確認してから `.value` を読む必要があります。Riverpod runtime/generator の API は major version 間で異なるため、依存を選んだ直後に最小 provider の生成・解析を通してから feature 実装に進んでください。
+このサンプルでは generator の削除対象から手管理の `analysis_options.yaml` を `.openapi-generator-ignore` で除外しています。また `test/**` も除外し、generator が TODO だけのテスト雛形を出力しないようにしています。package の `test/` には手書きの serializer テストを置きます。再生成後も設定・テスト・README が残ることを確認してください。`built_value` の null 許容値は `Optional<T>.isPresent` を確認してから `.value` を読む必要があります。Riverpod runtime/generator の API は major version 間で異なるため、依存を選んだ直後に最小 provider の生成・解析を通してから feature 実装に進んでください。
 
 ## 検証
 
